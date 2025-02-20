@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from datetime import datetime
 import pyautogui
 import time
+from emotion_analyzer import EmotionAnalyzer
 
 # Page config
 st.set_page_config(layout="wide")
@@ -80,6 +81,9 @@ if 'running' not in st.session_state:
 if st.button('Start/Stop Capture'):
     st.session_state.running = not st.session_state.running
 
+# Initialize emotion analyzer
+emotion_analyzer = EmotionAnalyzer()
+
 # Main loop to update video feeds
 while st.session_state.running:
     try:
@@ -88,12 +92,22 @@ while st.session_state.running:
         frame2 = get_video_feed(screen2)
         frame3 = get_video_feed(screen3)
         
+        # Analyze emotions for user 1 and 2
+        score1, emotions1 = emotion_analyzer.analyze_frame(frame1, 'user1')
+        score2, emotions2 = emotion_analyzer.analyze_frame(frame2, 'user2')
+        
+        # Draw emotions on frames
+        frame1 = emotion_analyzer.draw_emotion_on_frame(frame1, score1, emotions1)
+        frame2 = emotion_analyzer.draw_emotion_on_frame(frame2, score2, emotions2)
+        
+        # Update video displays
         img_placeholder_1.image(frame1, channels="BGR")
         img_placeholder_2.image(frame2, channels="BGR")
         img_placeholder_3.image(frame3, channels="BGR")
         
         # Update emotion chart
-        chart_placeholder.plotly_chart(create_sample_chart(), use_container_width=True)
+        chart_placeholder.plotly_chart(emotion_analyzer.create_emotion_chart(), 
+                                     use_container_width=True)
         
         time.sleep(0.1)
         
