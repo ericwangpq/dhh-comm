@@ -1,0 +1,11 @@
+name: dhh-comm-env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - streamlit
+  - opencv
+  - pillow
+  - numpy
+  - plotly 
