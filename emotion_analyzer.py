@@ -200,4 +200,56 @@ class EmotionAnalyzer:
         plt.legend()
         plt.grid(True, alpha=0.3)
         
-        return plt 
+        return plt
+
+    def create_emotion_spectrum(self, emotions):
+        """创建情绪光谱图
+        
+        Args:
+            emotions: 情绪字典，包含 'happy', 'sad', 'neutral' 的值
+            
+        Returns:
+            numpy.ndarray: 情绪光谱图像
+        """
+        # 创建一个长方形图像作为光谱
+        height = 30
+        width = 300
+        spectrum = np.zeros((height, width, 3), dtype=np.uint8)
+        
+        # 获取情绪值
+        happy_val = emotions.get('happy', 0)
+        sad_val = emotions.get('sad', 0)
+        neutral_val = emotions.get('neutral', 0)
+        
+        # 归一化确保总和为1
+        total = happy_val + sad_val + neutral_val
+        if total > 0:
+            happy_val /= total
+            sad_val /= total
+            neutral_val /= total
+        
+        # 创建RGB渐变 - R代表happy, G代表neutral, B代表sad
+        for x in range(width):
+            # 填充整列
+            spectrum[:, x] = [
+                int(255 * happy_val),    # R - happy
+                int(255 * neutral_val),  # G - neutral
+                int(255 * sad_val)       # B - sad
+            ]
+        
+        # 添加文字标签
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.5
+        font_color = (255, 255, 255)
+        font_thickness = 1
+        
+        # 添加情绪文本
+        emotions_text = f"Happy: {happy_val:.2f} Neutral: {neutral_val:.2f} Sad: {sad_val:.2f}"
+        text_size = cv2.getTextSize(emotions_text, font, font_scale, font_thickness)[0]
+        text_x = (width - text_size[0]) // 2
+        text_y = (height + text_size[1]) // 2
+        
+        cv2.putText(spectrum, emotions_text, (text_x, text_y), 
+                    font, font_scale, font_color, font_thickness, cv2.LINE_AA)
+        
+        return spectrum 

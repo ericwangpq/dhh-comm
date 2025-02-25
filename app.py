@@ -18,8 +18,20 @@ col1, col2 = st.columns([1, 3])
 
 # Left column - participant videos
 with col1:
+    # st.subheader("视频源")
+    
+    # 用户1视频源
+    st.markdown("### 用户1")
     img_placeholder_1 = st.empty()
+    spectrum_placeholder_1 = st.empty()  # 用户1的情绪光谱条
+    
+    # 用户2视频源
+    st.markdown("### 用户2")
     img_placeholder_2 = st.empty()
+    spectrum_placeholder_2 = st.empty()  # 用户2的情绪光谱条
+    
+    # 用户3视频源
+    st.markdown("### 用户3")
     img_placeholder_3 = st.empty()
 
 # Right column - main video and diagram
@@ -29,21 +41,7 @@ with col2:
     except Exception as e:
         st.error(f"Error loading video: {e}")
     
-    # Create a sample line chart for emotion tracking
-    def create_sample_chart():
-        times = [datetime.now().strftime("%H:%M:%S") for _ in range(10)]
-        emotions = np.random.rand(10)
-        
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=times, y=emotions, mode='lines+markers'))
-        fig.update_layout(
-            margin=dict(l=20, r=20, t=20, b=20),
-            height=200,  # Reduced height for more compact layout
-            xaxis_title="Time",
-            yaxis_title="Emotion Score"
-        )
-        return fig
-    
+    # 创建情绪图表的占位符
     chart_placeholder = st.empty()
 
 # Screen capture settings
@@ -149,27 +147,33 @@ while st.session_state.running:
         frame2 = screen2.capture()
         frame3 = screen3.capture()
         
-        # Analyze emotions for user 1 and 2
+        # 分析用户1和用户2的情绪
         score1, emotions1 = emotion_analyzer.analyze_frame(frame1, 'user1')
         score2, emotions2 = emotion_analyzer.analyze_frame(frame2, 'user2')
         
-        # Record emotion data with current timestamp
+        # 记录当前时间戳的情绪数据
         current_time = datetime.now().strftime("%H:%M:%S")
         st.session_state.emotion_data['timestamp'].append(current_time)
         st.session_state.emotion_data['user1_score'].append(score1)
         st.session_state.emotion_data['user2_score'].append(score2)
         st.session_state.emotion_data['emotion_diff'].append(abs(score1 - score2))
         
-        # Draw emotions on frames
-        frame1 = emotion_analyzer.draw_emotion_on_frame(frame1, score1, emotions1)
-        frame2 = emotion_analyzer.draw_emotion_on_frame(frame2, score2, emotions2)
+        # 创建情绪光谱图
+        spectrum1 = emotion_analyzer.create_emotion_spectrum(emotions1)
+        spectrum2 = emotion_analyzer.create_emotion_spectrum(emotions2)
         
-        # Update video displays
+        # 更新用户1的视频和情绪光谱
         img_placeholder_1.image(frame1, channels="BGR")
+        spectrum_placeholder_1.image(spectrum1, channels="BGR")
+        
+        # 更新用户2的视频和情绪光谱
         img_placeholder_2.image(frame2, channels="BGR")
+        spectrum_placeholder_2.image(spectrum2, channels="BGR")
+        
+        # 更新用户3的视频
         img_placeholder_3.image(frame3, channels="BGR")
         
-        # Update emotion chart
+        # 更新情绪图表
         times = list(range(len(st.session_state.emotion_data['timestamp'])))
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=times, y=st.session_state.emotion_data['user1_score'], 
