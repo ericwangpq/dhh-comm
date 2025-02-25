@@ -7,6 +7,8 @@ from datetime import datetime
 import pyautogui
 import time
 from emotion_analyzer import EmotionAnalyzer
+import pandas as pd
+import os
 
 # Page config
 st.set_page_config(layout="wide")
@@ -74,15 +76,55 @@ def get_video_feed(screen_capture):
         st.error(f"Error capturing screen: {e}")
         return np.zeros((200, 300, 3), dtype=np.uint8)
 
+# Initialize emotion analyzer
+emotion_analyzer = EmotionAnalyzer()
+
+# Add session data storage
+if 'emotion_data' not in st.session_state:
+    st.session_state.emotion_data = {
+        'timestamp': [],
+        'user1_score': [],
+        'user2_score': [],
+        'emotion_diff': []
+    }
+
 # Add a start/stop button
 if 'running' not in st.session_state:
     st.session_state.running = False
 
 if st.button('Start/Stop Capture'):
     st.session_state.running = not st.session_state.running
-
-# Initialize emotion analyzer
-emotion_analyzer = EmotionAnalyzer()
+    
+    # When stopping, save the emotion data to CSV
+    if not st.session_state.running and len(st.session_state.emotion_data['timestamp']) > 0:
+        # Create dataframe from collected data
+        df = pd.DataFrame(st.session_state.emotion_data)
+        
+        # Create directory if it doesn't exist
+        os.makedirs('logs', exist_ok=True)
+        
+        # Save to CSV with timestamp in filename
+        filename = f"logs/emotion_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        df.to_csv(filename, index=False)
+        st.success(f"Emotion data saved to {filename}")
+        
+        # Find top 3 moments with highest emotion difference
+        df['abs_diff'] = abs(df['user1_score'] - df['user2_score'])
+        top_diffs = df.nlargest(3, 'abs_diff')
+        
+        # Display the peak differences
+        st.subheader("Top 3 Emotion Difference Peaks")
+        for i, (_, row) in enumerate(top_diffs.iterrows(), 1):
+            st.write(f"Peak {i}: At {row['timestamp']}, User 1: {row['user1_score']:.2f}, "
+                    f"User 2: {row['user2_score']:.2f}, Difference: {row['abs_diff']:.2f}")
+        
+        # Reset the data for next session
+        st.session_state.emotion_data = {
+            'timestamp': [],
+            'user1_score': [],
+            'user2_score': [],
+            'emotion_diff': []
+        }
 
 # Main loop to update video feeds
 while st.session_state.running:
@@ -95,6 +137,13 @@ while st.session_state.running:
         # Analyze emotions for user 1 and 2
         score1, emotions1 = emotion_analyzer.analyze_frame(frame1, 'user1')
         score2, emotions2 = emotion_analyzer.analyze_frame(frame2, 'user2')
+        
+        # Record emotion data with current timestamp
+        current_time = datetime.now().strftime("%H:%M:%S")
+        st.session_state.emotion_data['timestamp'].append(current_time)
+        st.session_state.emotion_data['user1_score'].append(score1)
+        st.session_state.emotion_data['user2_score'].append(score2)
+        st.session_state.emotion_data['emotion_diff'].append(abs(score1 - score2))
         
         # Draw emotions on frames
         frame1 = emotion_analyzer.draw_emotion_on_frame(frame1, score1, emotions1)
