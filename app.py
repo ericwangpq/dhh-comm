@@ -45,7 +45,6 @@ with col2:
         return fig
     
     chart_placeholder = st.empty()
-    chart_placeholder.plotly_chart(create_sample_chart(), use_container_width=True)
 
 # Screen capture settings
 class ScreenCapture:
@@ -57,24 +56,20 @@ class ScreenCapture:
     
     def capture(self):
         # Capture the specified region of the screen
-        screenshot = pyautogui.screenshot(region=(self.x, self.y, self.width, self.height))
-        frame = np.array(screenshot)
-        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        return frame
+        try:
+            screenshot = pyautogui.screenshot(region=(self.x, self.y, self.width, self.height))
+            frame = np.array(screenshot)
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            return frame
+        except Exception as e:
+            st.error(f"Error capturing screen: {e}")
+            return np.zeros((200, 300, 3), dtype=np.uint8)
 
 # Initialize screen captures
 # You'll need to adjust these coordinates based on your screen layout
 screen1 = ScreenCapture(0, 0, 300, 200)  # User 1 region
 screen2 = ScreenCapture(0, 220, 300, 200)  # User 2 region
 screen3 = ScreenCapture(0, 440, 300, 200)  # Moderator region
-
-# Replace get_video_feed with screen capture
-def get_video_feed(screen_capture):
-    try:
-        return screen_capture.capture()
-    except Exception as e:
-        st.error(f"Error capturing screen: {e}")
-        return np.zeros((200, 300, 3), dtype=np.uint8)
 
 # Initialize emotion analyzer
 emotion_analyzer = EmotionAnalyzer()
@@ -87,6 +82,26 @@ if 'emotion_data' not in st.session_state:
         'user2_score': [],
         'emotion_diff': []
     }
+
+# 现在emotion_analyzer已经初始化，可以安全地使用它
+# 创建初始图表
+with col2:
+    # 创建初始图表
+    times = list(range(len(st.session_state.emotion_data['timestamp'])))
+    fig = go.Figure()
+    if len(times) > 0:  # 只有当有数据时才添加轨迹
+        fig.add_trace(go.Scatter(x=times, y=st.session_state.emotion_data['user1_score'], 
+                                mode='lines+markers', name='User 1'))
+        fig.add_trace(go.Scatter(x=times, y=st.session_state.emotion_data['user2_score'], 
+                                mode='lines+markers', name='User 2'))
+    fig.update_layout(
+        margin=dict(l=20, r=20, t=20, b=20),
+        height=200,
+        xaxis_title="Time",
+        yaxis_title="Emotion Score",
+        yaxis=dict(range=[-1, 1])
+    )
+    chart_placeholder.plotly_chart(fig, use_container_width=True)
 
 # Add a start/stop button
 if 'running' not in st.session_state:
@@ -129,10 +144,10 @@ if st.button('Start/Stop Capture'):
 # Main loop to update video feeds
 while st.session_state.running:
     try:
-        # Update video feeds
-        frame1 = get_video_feed(screen1)
-        frame2 = get_video_feed(screen2)
-        frame3 = get_video_feed(screen3)
+        # 直接使用ScreenCapture对象的capture方法获取视频帧
+        frame1 = screen1.capture()
+        frame2 = screen2.capture()
+        frame3 = screen3.capture()
         
         # Analyze emotions for user 1 and 2
         score1, emotions1 = emotion_analyzer.analyze_frame(frame1, 'user1')
@@ -155,8 +170,20 @@ while st.session_state.running:
         img_placeholder_3.image(frame3, channels="BGR")
         
         # Update emotion chart
-        chart_placeholder.plotly_chart(emotion_analyzer.create_emotion_chart(), 
-                                     use_container_width=True)
+        times = list(range(len(st.session_state.emotion_data['timestamp'])))
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=times, y=st.session_state.emotion_data['user1_score'], 
+                                 mode='lines+markers', name='User 1'))
+        fig.add_trace(go.Scatter(x=times, y=st.session_state.emotion_data['user2_score'], 
+                                 mode='lines+markers', name='User 2'))
+        fig.update_layout(
+            margin=dict(l=20, r=20, t=20, b=20),
+            height=200,
+            xaxis_title="Time",
+            yaxis_title="Emotion Score",
+            yaxis=dict(range=[-1, 1])
+        )
+        chart_placeholder.plotly_chart(fig, use_container_width=True)
         
         time.sleep(0.1)
         
