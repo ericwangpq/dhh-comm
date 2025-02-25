@@ -13,31 +13,43 @@ import os
 # Page config
 st.set_page_config(layout="wide")
 
+# Custom CSS to reduce padding and margins
+st.markdown("""
+<style>
+    .block-container {padding-top: 3rem; padding-bottom: 0rem;}
+    div[data-testid="stVerticalBlock"] > div {padding-top: 0rem; padding-bottom: 0rem;}
+    div.stMarkdown p {margin-bottom: 0.5rem;}
+    div[data-testid="stHeader"] {padding-top: 0rem;}
+    div.stVideo > video {height: 300px !important;}
+</style>
+""", unsafe_allow_html=True)
+
 # Create layout with tighter spacing
 col1, col2 = st.columns([1, 3])
 
 # Left column - participant videos
 with col1:
-    # st.subheader("视频源")
-    
     # 用户1视频源
-    st.markdown("### 用户1")
     img_placeholder_1 = st.empty()
     spectrum_placeholder_1 = st.empty()  # 用户1的情绪光谱条
     
+    # 添加分割线
+    st.markdown("<hr style='margin: 5px 0px; border: 0; height: 1px; background: #bbb;'>", unsafe_allow_html=True)
+    
     # 用户2视频源
-    st.markdown("### 用户2")
     img_placeholder_2 = st.empty()
     spectrum_placeholder_2 = st.empty()  # 用户2的情绪光谱条
     
+    # 添加分割线
+    st.markdown("<hr style='margin: 5px 0px; border: 0; height: 1px; background: #bbb;'>", unsafe_allow_html=True)
+    
     # 用户3视频源
-    st.markdown("### 用户3")
     img_placeholder_3 = st.empty()
 
 # Right column - main video and diagram
 with col2:
     try:
-        st.video('vid/vid.mp4')
+        st.video('vid/vid.mp4', start_time=0)
     except Exception as e:
         st.error(f"Error loading video: {e}")
     
@@ -61,13 +73,13 @@ class ScreenCapture:
             return frame
         except Exception as e:
             st.error(f"Error capturing screen: {e}")
-            return np.zeros((200, 300, 3), dtype=np.uint8)
+            return np.zeros((150, 200, 3), dtype=np.uint8)  # 减小默认尺寸
 
 # Initialize screen captures
 # You'll need to adjust these coordinates based on your screen layout
-screen1 = ScreenCapture(0, 0, 300, 200)  # User 1 region
-screen2 = ScreenCapture(0, 220, 300, 200)  # User 2 region
-screen3 = ScreenCapture(0, 440, 300, 200)  # Moderator region
+screen1 = ScreenCapture(0, 0, 300, 200)  # User 1 region - 恢复原始尺寸
+screen2 = ScreenCapture(0, 220, 300, 200)  # User 2 region - 恢复原始尺寸
+screen3 = ScreenCapture(0, 440, 300, 200)  # Moderator region - 恢复原始尺寸
 
 # Initialize emotion analyzer
 emotion_analyzer = EmotionAnalyzer()
@@ -94,7 +106,7 @@ with col2:
                                 mode='lines+markers', name='User 2'))
     fig.update_layout(
         margin=dict(l=20, r=20, t=20, b=20),
-        height=200,
+        height=180,  # 减小图表高度
         xaxis_title="Time",
         yaxis_title="Emotion Score",
         yaxis=dict(range=[-1, 1])
@@ -182,7 +194,7 @@ while st.session_state.running:
                                  mode='lines+markers', name='User 2'))
         fig.update_layout(
             margin=dict(l=20, r=20, t=20, b=20),
-            height=200,
+            height=180,  # 减小图表高度
             xaxis_title="Time",
             yaxis_title="Emotion Score",
             yaxis=dict(range=[-1, 1])
