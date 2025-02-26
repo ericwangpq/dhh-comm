@@ -92,6 +92,8 @@ if 'emotion_data' not in st.session_state:
         'user2_score': [],
         'emotion_diff': []
     }
+if 'start_time' not in st.session_state:
+    st.session_state.start_time = None
 
 # 现在emotion_analyzer已经初始化，可以安全地使用它
 # 创建初始图表
@@ -120,6 +122,10 @@ if 'running' not in st.session_state:
 if st.button('Start/Stop Capture'):
     st.session_state.running = not st.session_state.running
     
+    # When starting, record the start time
+    if st.session_state.running:
+        st.session_state.start_time = datetime.now()
+    
     # When stopping, save the emotion data to CSV
     if not st.session_state.running and len(st.session_state.emotion_data['timestamp']) > 0:
         # Create dataframe from collected data
@@ -133,14 +139,23 @@ if st.button('Start/Stop Capture'):
         df.to_csv(filename, index=False)
         st.success(f"Emotion data saved to {filename}")
         
-        # Find top 3 moments with highest emotion difference
+        # Find top 5 moments with highest emotion difference
         df['abs_diff'] = abs(df['user1_score'] - df['user2_score'])
-        top_diffs = df.nlargest(3, 'abs_diff')
+        top_diffs = df.nlargest(5, 'abs_diff')
+        
+        # Find top 5 moments with lowest emotion difference
+        lowest_diffs = df.nsmallest(5, 'abs_diff')
         
         # Display the peak differences
-        st.subheader("Top 3 Emotion Difference Peaks")
+        st.subheader("Top 5 Highest Emotion Difference Moments")
         for i, (_, row) in enumerate(top_diffs.iterrows(), 1):
             st.write(f"Peak {i}: At {row['timestamp']}, User 1: {row['user1_score']:.2f}, "
+                    f"User 2: {row['user2_score']:.2f}, Difference: {row['abs_diff']:.2f}")
+        
+        # Display the lowest differences
+        st.subheader("Top 5 Lowest Emotion Difference Moments")
+        for i, (_, row) in enumerate(lowest_diffs.iterrows(), 1):
+            st.write(f"Moment {i}: At {row['timestamp']}, User 1: {row['user1_score']:.2f}, "
                     f"User 2: {row['user2_score']:.2f}, Difference: {row['abs_diff']:.2f}")
         
         # Reset the data for next session
@@ -150,6 +165,7 @@ if st.button('Start/Stop Capture'):
             'user2_score': [],
             'emotion_diff': []
         }
+        st.session_state.start_time = None
 
 # Main loop to update video feeds
 while st.session_state.running:
@@ -163,8 +179,12 @@ while st.session_state.running:
         score1, emotions1 = emotion_analyzer.analyze_frame(frame1, 'user1')
         score2, emotions2 = emotion_analyzer.analyze_frame(frame2, 'user2')
         
-        # 记录当前时间戳的情绪数据
-        current_time = datetime.now().strftime("%H:%M:%S")
+        # 记录当前时间戳的情绪数据（从开始按钮点击后的相对时间）
+        elapsed_time = datetime.now() - st.session_state.start_time
+        elapsed_seconds = int(elapsed_time.total_seconds())
+        minutes, seconds = divmod(elapsed_seconds, 60)
+        current_time = f"{minutes:02d}:{seconds:02d}"
+        
         st.session_state.emotion_data['timestamp'].append(current_time)
         st.session_state.emotion_data['user1_score'].append(score1)
         st.session_state.emotion_data['user2_score'].append(score2)
