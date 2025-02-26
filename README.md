@@ -21,7 +21,7 @@
    streamlit run app.py --server.runOnSave=true
    ```
 
-### 虚拟环境管理
+### 虚拟环境管理 (仅供参考之用)
 
 常用的 conda 命令：
 conda activate dhh-comm-env - 激活环境
