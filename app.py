@@ -76,10 +76,10 @@ class ScreenCapture:
             return np.zeros((150, 200, 3), dtype=np.uint8)  # 减小默认尺寸
 
 # Initialize screen captures
-# You'll need to adjust these coordinates based on your screen layout
-screen1 = ScreenCapture(0, 0, 300, 200)  # User 1 region - 恢复原始尺寸
-screen2 = ScreenCapture(0, 220, 300, 200)  # User 2 region - 恢复原始尺寸
-screen3 = ScreenCapture(0, 440, 300, 200)  # Moderator region - 恢复原始尺寸
+# Adjusted to start from 200px from top with 16:9 aspect ratio
+screen1 = ScreenCapture(0, 200, 320, 180)  # User 1 region 
+screen2 = ScreenCapture(0, 400, 320, 180)  # User 2 region 
+screen3 = ScreenCapture(0, 600, 320, 180)  # Moderator region
 
 # Initialize emotion analyzer
 emotion_analyzer = EmotionAnalyzer()

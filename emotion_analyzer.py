@@ -228,28 +228,47 @@ class EmotionAnalyzer:
             sad_val /= total
             neutral_val /= total
         
+        # 降低亮度系数 (0.0-1.0)
+        brightness_factor = 0.6
+        
+        # 降低饱和度 - 通过向灰色混合
+        saturation_factor = 0.7
+        gray_component = 1 - saturation_factor
+        
         # 创建RGB渐变 - R代表happy, G代表neutral, B代表sad
         for x in range(width):
+            # 计算原始颜色值
+            r = int(255 * happy_val)
+            g = int(255 * neutral_val)
+            b = int(255 * sad_val)
+            
+            # 降低饱和度 (向灰色混合)
+            gray = (r + g + b) // 3
+            r = int(r * saturation_factor + gray * gray_component)
+            g = int(g * saturation_factor + gray * gray_component)
+            b = int(b * saturation_factor + gray * gray_component)
+            
+            # 降低亮度
+            r = int(r * brightness_factor)
+            g = int(g * brightness_factor)
+            b = int(b * brightness_factor)
+            
             # 填充整列
-            spectrum[:, x] = [
-                int(255 * happy_val),    # R - happy
-                int(255 * neutral_val),  # G - neutral
-                int(255 * sad_val)       # B - sad
-            ]
+            spectrum[:, x] = [r, g, b]
         
-        # 添加文字标签
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.5
-        font_color = (255, 255, 255)
-        font_thickness = 1
+        # # 添加文字标签
+        # font = cv2.FONT_HERSHEY_SIMPLEX
+        # font_scale = 0.5
+        # font_color = (200, 200, 200)  # 更柔和的文字颜色
+        # font_thickness = 1
         
-        # 添加情绪文本
-        emotions_text = f"Happy: {happy_val:.2f} Neutral: {neutral_val:.2f} Sad: {sad_val:.2f}"
-        text_size = cv2.getTextSize(emotions_text, font, font_scale, font_thickness)[0]
-        text_x = (width - text_size[0]) // 2
-        text_y = (height + text_size[1]) // 2
+        # # 添加情绪文本
+        # emotions_text = f"happy: {happy_val:.2f} neutral: {neutral_val:.2f} sad: {sad_val:.2f}"
+        # text_size = cv2.getTextSize(emotions_text, font, font_scale, font_thickness)[0]
+        # text_x = (width - text_size[0]) // 2
+        # text_y = (height + text_size[1]) // 2
         
-        cv2.putText(spectrum, emotions_text, (text_x, text_y), 
-                    font, font_scale, font_color, font_thickness, cv2.LINE_AA)
+        # cv2.putText(spectrum, emotions_text, (text_x, text_y), 
+        #             font, font_scale, font_color, font_thickness, cv2.LINE_AA)
         
         return spectrum 
