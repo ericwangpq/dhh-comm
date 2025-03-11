@@ -3,9 +3,21 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.9
-  - streamlit
-  - opencv
-  - pillow
+  - python=3.12
+  - pip
   - numpy
-  - plotly 
+  - pandas
+  - pillow
+  - opencv
+  - pip:
+    - --force-reinstall
+    - streamlit==1.43.1
+    - deepface
+    - flask
+    - flask-cors
+    - tensorflow
+    - keras
+    - mtcnn
+    - retina-face
+    - plotly
+    - pyautogui 

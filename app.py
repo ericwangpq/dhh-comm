@@ -221,7 +221,7 @@ while st.session_state.running:
         )
         chart_placeholder.plotly_chart(fig, use_container_width=True)
         
-        time.sleep(0.1)
+        time.sleep(0.01)
         
     except Exception as e:
         st.error(f"Error in main loop: {e}")
