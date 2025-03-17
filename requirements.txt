@@ -7,7 +7,7 @@ pandas
 Pillow
 plotly
 PyAutoGUI
-streamlit
+streamlit = 1.42.2
 tensorflow
 keras
 tf-keras

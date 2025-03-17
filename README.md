@@ -7,8 +7,8 @@
 1. 克隆或下载此仓库 
 2. cd到仓库目录下, 安装依赖项：
    ```
-   conda create -n dhh-comm-env python=3.10
-   conda activate dhh-comm-env
+   conda create -n dhh-comm-env-py312 python=3.12
+   conda activate dhh-comm-env-py312
    pip install -r requirements.txt
    ```
    
